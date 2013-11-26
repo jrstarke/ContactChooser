@@ -12,25 +12,40 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
+import android.util.Log;
 
 public class ContactChooserPlugin extends CordovaPlugin {
 
     private Context context;
     private CallbackContext callbackContext;
 
+    private static final String TAG = "ContactChooser";
+    
     private static final int CHOOSE_CONTACT = 1;
+    
+    private static final int BY_EMAIL = 1;
+    private static final int BY_PHONE = 2;
 
 	@Override
-	public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
+	public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         this.callbackContext = callbackContext;
 	    this.context = cordova.getActivity().getApplicationContext();
 
 		if (action.equals("chooseContact")) {
-
-            Intent intent = new Intent(Intent.ACTION_PICK,
-                    ContactsContract.CommonDataKinds.Email.CONTENT_URI);
+			Intent intent = null;
+			if (data.length() > 0 && data.getInt(0) == BY_PHONE) {
+				Log.v(TAG, "ContactChooser: BY_PHONE");
+				intent = new Intent(Intent.ACTION_PICK,
+						ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+			}
+			else {
+				Log.v(TAG, "ContactChooser: BY_EMAIL");
+				intent = new Intent(Intent.ACTION_PICK,
+	                    ContactsContract.CommonDataKinds.Email.CONTENT_URI);
+			}
             cordova.startActivityForResult(this, intent, CHOOSE_CONTACT);
-
+            
             PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
             r.setKeepCallback(true);
             callbackContext.sendPluginResult(r);
