@@ -26,12 +26,15 @@ public class ContactChooserPlugin extends CordovaPlugin {
     
     private static final int BY_EMAIL = 1;
     private static final int BY_PHONE = 2;
+	private int selectType;
 
 	@Override
 	public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         this.callbackContext = callbackContext;
 	    this.context = cordova.getActivity().getApplicationContext();
 
+	    selectType = data.getInt(0);
+	    
 		if (action.equals("chooseContact")) {
 			Intent intent = null;
 			if (data.length() > 0 && data.getInt(0) == BY_PHONE) {
@@ -42,7 +45,7 @@ public class ContactChooserPlugin extends CordovaPlugin {
 			else {
 				Log.v(TAG, "ContactChooser: BY_EMAIL");
 				intent = new Intent(Intent.ACTION_PICK,
-	                    ContactsContract.CommonDataKinds.Email.CONTENT_URI);
+						ContactsContract.CommonDataKinds.Email.CONTENT_URI);
 			}
             cordova.startActivityForResult(this, intent, CHOOSE_CONTACT);
             
@@ -60,6 +63,7 @@ public class ContactChooserPlugin extends CordovaPlugin {
         if (resultCode == Activity.RESULT_OK) {
 
             Uri contactData = data.getData();
+            String id = contactData.getLastPathSegment();
             ContentResolver resolver = context.getContentResolver();
             Cursor c =  resolver.query(contactData, null, null, null, null);
 
@@ -71,9 +75,16 @@ public class ContactChooserPlugin extends CordovaPlugin {
                     String phoneNumber = "";
                     if (Integer.parseInt(c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
                         String query = ContactsContract.CommonDataKinds.Phone.CONTACT_ID;
-                        Cursor phoneCursor = resolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
-                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                                new String[]{ contactId }, null);
+                        Cursor phoneCursor;
+                        if (this.selectType == BY_PHONE) {
+                        	phoneCursor = resolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                        			ContactsContract.CommonDataKinds.Phone._ID + " = ?", new String[]{id}, null);
+                        }
+                        else {
+	                        phoneCursor = resolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+	                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+	                                new String[]{ contactId }, null);
+                        }
                         phoneCursor.moveToFirst();
                         phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
                         phoneCursor.close();
