@@ -86,7 +86,7 @@ public class ContactChooserPlugin extends CordovaPlugin {
 	                                new String[]{ contactId }, null);
                         }
                         phoneCursor.moveToFirst();
-                        phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER));
                         phoneCursor.close();
                     }
 
